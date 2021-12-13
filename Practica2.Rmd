@@ -43,7 +43,7 @@ train <- datos[itrain, ]
 test <- datos[-itrain, ]
 ```
 
-Para este ejercicio utilizaremos el paquete `glmnet`. Este paquete no emplea formulación de modelos, sino que hay que establecer la respuesta `y`y una matriz o data.frame con las variables explicativas `x`. Como ya hemos comentado, la variable respuesta será `Accept`y las variables explicativas serán el resto de variables numéricas del conjunto de datos.
+Para este ejercicio utilizaremos el paquete `glmnet`. Este paquete no emplea formulación de modelos, sino que hay que establecer la respuesta `y` y una matriz o data.frame con las variables explicativas `x`. Como ya hemos comentado, la variable respuesta será `Accept` y las variables explicativas serán el resto de variables numéricas del conjunto de datos.
 
 ```{r}
 x<-as.matrix(train[,-2])
@@ -58,7 +58,7 @@ library(glmnet)
 set.seed(40)
 cv.lasso<-cv.glmnet(x,y,alpha=1)
 ```
-Para seleccionar el parámetro de penalización por validación cruzada hemos utilizado la función `cv.glmnet()` y especificando `alpha=1`(opción por defecto) se utiliza la penalización lasso. 
+Para seleccionar el parámetro de penalización por validación cruzada hemos utilizado la función `cv.glmnet()` y especificando `alpha=1` (opción por defecto) se utiliza la penalización lasso. 
 
 Podemos representar el error cuadrático medio con respecto a los valores del logaritmo de $\lambda$:
     
