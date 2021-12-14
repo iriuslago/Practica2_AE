@@ -11,7 +11,7 @@ header-includes:
   - \renewcommand{\and}{\\}
 ---
 
-En primer lugar vamos a cargar el conjunto de datos para la realización de esta práctica::
+En primer lugar vamos a cargar el conjunto de datos para la realización de esta práctica:
 
 ```{r}
 load("College4.RData")
