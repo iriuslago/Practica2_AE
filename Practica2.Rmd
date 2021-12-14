@@ -43,7 +43,7 @@ train <- datos[itrain, ]
 test <- datos[-itrain, ]
 ```
 
-Para este ejercicio utilizaremos el paquete `glmnet`. Este paquete no emplea formulación de modelos, sino que hay que establecer la respuesta `y`y una matriz o data.frame con las variables explicativas `x`. Como ya hemos comentado, la variable respuesta será `Accept`y las variables explicativas serán el resto de variables numéricas del conjunto de datos.
+Para este ejercicio utilizaremos el paquete `glmnet`. Este paquete no emplea formulación de modelos, sino que hay que establecer la respuesta `y` y una matriz o data.frame con las variables explicativas `x`. Como ya hemos comentado, la variable respuesta será `Accept`y las variables explicativas serán el resto de variables numéricas del conjunto de datos.
 
 ```{r}
 x<-as.matrix(train[,-2])
@@ -76,7 +76,7 @@ cv.lasso$lambda.1se
 
 ### b. Obtener los coeficientes del modelo y evaluar las predicciones en la muestra de test (gráfico y medidas de error).
 
-Para obtener los coeficientes del modelo con el parámetro de penalización calculado en el apartado anterior podemos usar la función `coef()`de R:
+Para obtener los coeficientes del modelo con el parámetro de penalización calculado en el apartado anterior podemos usar la función `coef()` de R:
 
 ```{r}
 coef(cv.lasso,s="lambda.1se")
