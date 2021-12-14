@@ -146,6 +146,8 @@ Es decir, pasaríamos de 6 coeficientes distintos de cero a 11 coeficientes. En 
 
 ## 2. Ajustar un modelo mediante regresión spline adaptativa multivariante (MARS) empleando el método `"earth"` del paquete `caret`.
 
+Para la resolución de este apartado emplearemos la librería `caret`. En primer lugar, para seleccionar la combinación óptima de hiperparámetros, creamos el objeto `tune.grid`. En él, guardamos la combinación de grado máximo de interacción (argumento `degree`), y el número máximo de términos en el modelo final (argumento `nprune`).
+
 ### a. Utilizar validación cruzada con 5 grupos para seleccionar los valores "óptimos" de los hiperparámetros considerando `degree = 1` y `nprune = c(5, 10, 15, 20)`, y fijar `nk = 30`.
        
 ### b. Estudiar el efecto de los predictores incluidos en el modelo final y obtener medidas de su importancia.
