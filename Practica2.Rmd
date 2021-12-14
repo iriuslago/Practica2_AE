@@ -43,7 +43,7 @@ train <- datos[itrain, ]
 test <- datos[-itrain, ]
 ```
 
-Para este ejercicio utilizaremos el paquete `glmnet`. Este paquete no emplea formulación de modelos, sino que hay que establecer la respuesta `y` y una matriz o data.frame con las variables explicativas `x`. Como ya hemos comentado, la variable respuesta será `Accept`y las variables explicativas serán el resto de variables numéricas del conjunto de datos.
+Para este ejercicio utilizaremos el paquete `glmnet`. Este paquete no emplea formulación de modelos, sino que hay que establecer la respuesta `y`y una matriz o data.frame con las variables explicativas `x`. Como ya hemos comentado, la variable respuesta será `Accept`y las variables explicativas serán el resto de variables numéricas del conjunto de datos.
 
 ```{r}
 x<-as.matrix(train[,-2])
@@ -76,7 +76,7 @@ cv.lasso$lambda.1se
 
 ### b. Obtener los coeficientes del modelo y evaluar las predicciones en la muestra de test (gráfico y medidas de error).
 
-Para obtener los coeficientes del modelo con el parámetro de penalización calculado en el apartado anterior podemos usar la función `coef()` de R:
+Para obtener los coeficientes del modelo con el parámetro de penalización calculado en el apartado anterior podemos usar la función `coef()`de R:
 
 ```{r}
 coef(cv.lasso,s="lambda.1se")
@@ -147,13 +147,115 @@ Es decir, pasaríamos de 6 coeficientes distintos de cero a 11 coeficientes. En 
 ## 2. Ajustar un modelo mediante regresión spline adaptativa multivariante (MARS) empleando el método `"earth"` del paquete `caret`.
 
 ### a. Utilizar validación cruzada con 5 grupos para seleccionar los valores "óptimos" de los hiperparámetros considerando `degree = 1` y `nprune = c(5, 10, 15, 20)`, y fijar `nk = 30`.
-       
+   
+Para la resolución de este apartado emplearemos la librería `caret`.
+
+```{r,message=FALSE}
+library(caret)
+```    
+
+En primer lugar, para seleccionar la combinación óptima de hiperparámetros, creamos el objeto `tune.grid`. En él guardamos la combinación de grado máximo de interacción (argumento `degree`) y el número máximo de términos en el modelo final (argumento `nprune`).
+
+```{r}
+tune.grid<-expand.grid(degree=1,
+                       nprune=c(5,10,15,20))
+```
+
+En este apartado ajustamos el modelo con la función `train` del paquete `caret`. Le indicamos que use el conjunto de datos de entrenamiento, el método `earth` (Enhanced Adaptive Regression Through Hinges) y el número máximo de términos en el crecimiento modelo (`nk`). El argumento `trControl` sirve para indicar, entre otras cosas, que use validación cruzada (`method="cv"`) para la selección óptima de los hiperparámetros. Finalmente en `tuneGrid` le indicamos la rejilla que definimos anteriormente.
+
+```{r,message=FALSE}
+set.seed(40)
+caret.mars<-train(Accept~.,data=train,method="earth",nk=30,
+                  trControl=trainControl(method="cv",number=5),
+                  tuneGrid=tune.grid)
+```
+
+Podemos consultar el modelo que ha calculado en el objeto `finalModel`, y los hiperparámetros escogidos en `bestTune`.
+
+```{r}
+final.model<-caret.mars$finalModel
+caret.mars$bestTune
+```
+
 ### b. Estudiar el efecto de los predictores incluidos en el modelo final y obtener medidas de su importancia.
-       
+    
+En este apartado, comenzamos representando los efectos de los predictores incluídos en el modelo final para poder interpretarlos. Para ello, nos ayudamos de la librería `plotmo`:
+  
+```{r,message=FALSE,out.width="60%",fig.align='center'}
+library(plotmo)
+plotmo(final.model)
+```
+
+En primer lugar, vemos que el efecto de `Apps` (Número de solicitudes recibidas) crece de forma prácticamente lineal a medida que aumenta su número; en segundo lugar, el efecto de `Enroll` (Número de nuevos estudiantes matriculados) podríamos decir que crece de forma casi lineal, aunque con una pendiente menor que en el caso anterior; en tercer lugar, el efecto de `Top10perc` va decreciendo de forma gradual hasta pasado el valor 60, donde decrece de forma drástica; en cuarto lugar, el efecto `Outstate` (Número de estudiantes de otro estado) crece ligeramente hasta pasado el valor 15, donde empieza a decrecer; por último, `Grad.Rate` (Tasa de graduación) tiene un efecto casi plano hasta el valor 80, donde comienza a decrecer.
+
+Continuamos estudiando la importancia de las variables con la función `evimp` del paquete `earth`:
+  
+```{r,warning=F,out.width="60%",fig.align='center'}
+varimp<-evimp(final.model)
+varimp
+plot(varimp)
+```
+
+Tanto en la salida de la función, como en el gráfico, podemos ver cuáles son las variables más importantes. Observamos que el número de solicitudes recibidas es la variable que tiene mayor importancia, después tendríamos la variable `Top10perc`, luego el número de nuevos estudiantes matriculados, y por último la tasa de graduación y el número de estudiantes de otro estado.
+
 ### c. Evaluar las predicciones en la muestra de test.
     
+Para hacer las predicciones emplearemos la función `predict` del paquete base de `R`, como viene siendo habitual. Empleamos el $20\%$ restante de los datos que se guardaron como muestra de test:
+  
+```{r}
+obs<-test$Accept
+pred_mars<-predict(caret.mars,newdata=test)
+```
+
+Para poder evaluar estas predicciones, nos ayudaremos de la función `accuracy` que definimos en el primer ejercicio:
+  
+```{r}
+accuracy(pred_mars,obs)
+```
+
+En este caso obtenemos un $R^2 = 0.9679$, es decir, este modelo explica un $96.79\%$ de la variabilidad de los datos. En el apartado anterior obtuvimos un $R^2 = 0.9583$, por lo que este modelo podría explicar un $1\%$ mejor la variabilidad.
+
 ## 3. Volver a ajustar el modelo aditivo del ejercicio anterior empleando la función `gam()` del paquete `mcgv`.
 
 ### a. Incluir los efectos no paramétricos de los predictores seleccionados por el método MARS.
 
+Las variables predictoras seleccionadas por el método MARS en el ejercicio anterior eran `Apps`, `Enroll`, `Top10perc`, `Outstate` y `Grad.Rate`, donde no se consideraron las posibles interacciones. Así pues, ajustamos el modelo GAM con dichas variables predictoras:
+       
+```{r}
+library(mgcv)
+set.seed(40)
+gam<-gam(Accept~s(Apps)+s(Enroll)+s(Top10perc)+s(Outstate)+s(Grad.Rate),data=train,select=T)
+summary(gam)
+```
+       
 ### b. Evaluar las predicciones en la muestra de test y comparar los resultados con los métodos anteriores.
+
+```{r}
+obs<-test$Accept
+pred_gam<-predict(gam,newdata=test)
+accuracy(pred_gam,obs)
+```
+   
+Recordemos la evaluación de los errores con los métodos anteriores:
+
+```{r}
+accuracy(pred_lasso,obs)
+accuracy(pred_mars,obs)
+```
+
+Todas las predicciones arrojan un pseudo-R-cuadrado elevado, superior al 95\%, por lo que los modelos ajustados explicarían casi toda la variabilidad de la respuesta. El modelo GAM parece explicar ligeramente mejor la respuesta que el modelo lasso y prácticamente no hay diferencias con el modelo MARS.
+
+Podemos observar el gráfico de observaciones frente a las predicciones obtenidas por el último modelo, en el que los puntos deberían situarse en torno a la recta $y=x$. Se representan también con línea discontinua los ajustes lineales obtenidos por los tres modelos.
+
+```{r,plot=TRUE,out.width="60%",fig.align='center'}
+plot(pred_gam, obs, xlab = "Predicción", ylab = "Observado")
+abline(a = 0, b = 1)
+res_gam <- lm(obs ~ pred_gam)
+abline(res_gam, lty = 2)
+res_lasso <- lm(obs ~ pred_lasso)
+abline(res_lasso, lty = 2,col="red")
+res_mars <- lm(obs ~ pred_mars)
+abline(res_mars, lty = 2,col="blue")
+```
+
+Como ya habíamos visto, todos los ajustes son muy próximos a la identidad y también muy similares entre sí. También se puede observar que la línea azul del ajuste MARS (que está prácticamente superpuesto con el GAM) está ligeramente más próxima a la identidad que la línea roja del ajuste lasso. 
